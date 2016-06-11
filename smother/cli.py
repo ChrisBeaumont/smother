@@ -197,7 +197,7 @@ def diff(branch):
 
 @cli.command()
 @click.argument('src', nargs=-1, type=click.Path())
-@click.argument('dst', nargs=1, type=click.File('w'))
+@click.argument('dst', nargs=1, type=click.Path())
 def combine(src, dst):
 
     result = None

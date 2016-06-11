@@ -10,6 +10,7 @@ setup(
 #        'more_itertools',
         'coverage',
         'portalocker>=0.4',
+        'six',
     ],
     entry_points={
         'nose.plugins.0.10': [
