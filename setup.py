@@ -9,6 +9,7 @@ setup(
 #        'diff_cover>=0.9',
 #        'more_itertools',
         'coverage',
+        'portalocker>=0.4',
     ],
     entry_points={
         'nose.plugins.0.10': [

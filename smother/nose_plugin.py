@@ -22,6 +22,7 @@ class SmotherNose(Coverage):
         super(SmotherNose, self).configure(options, conf)
         if self.enabled:
             self.output = options.smother_output
+            self.append = options.smother_append
             self.smother = Smother(self.coverInstance)
             self.coverInstance.stop() # XXX why is this needed to capture the first test?
 
@@ -93,7 +94,10 @@ class SmotherNose(Coverage):
                           default=env.get('NOSE_SMOTHER_OUTPUT', '.smother'),
                           dest="smother_output",
                           help="Location of output file")
+        parser.add_option("--smother-append", action="store_true",
+                          default=env.get('NOSE_SMOTHER_APPEND'),
+                          dest="smother_append",
+                          help="Append to existing smother file")
 
     def report(self, stream):
-        with open(self.output, 'w') as outfile:
-            self.smother.write(outfile)
+        self.smother.write(self.output, append=self.append)

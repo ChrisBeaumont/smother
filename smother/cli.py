@@ -195,5 +195,21 @@ def diff(branch):
     _report_from_regions(regions)
 
 
+@cli.command()
+@click.argument('src', nargs=-1, type=click.Path())
+@click.argument('dst', nargs=1, type=click.File('w'))
+def combine(src, dst):
+
+    result = None
+    for infile in src:
+        sm = Smother.load(infile)
+        if not result:
+            result = sm
+        else:
+            result |= sm
+
+    result.write(dst)
+
+
 if __name__ == "__main__":
     cli()
