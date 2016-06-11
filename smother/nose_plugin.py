@@ -21,6 +21,7 @@ class SmotherNose(Coverage):
     def configure(self, options, conf):
         super(SmotherNose, self).configure(options, conf)
         if self.enabled:
+            self.output = options.smother_output
             self.smother = Smother(self.coverInstance)
             self.coverInstance.stop() # XXX why is this needed to capture the first test?
 
@@ -88,7 +89,11 @@ class SmotherNose(Coverage):
                           default=env.get('NOSE_COVER_NO_PRINT'),
                           dest="cover_no_print",
                           help="Suppress printing of coverage information")
+        parser.add_option("--smother-output", action="store",
+                          default=env.get('NOSE_SMOTHER_OUTPUT', '.smother'),
+                          dest="smother_output",
+                          help="Location of output file")
 
     def report(self, stream):
-        with open('.smother', 'w') as outfile:
+        with open(self.output, 'w') as outfile:
             self.smother.write(outfile)
