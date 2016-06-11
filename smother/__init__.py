@@ -48,7 +48,14 @@ class Smother(object):
         Append mode is atomic, and can be run in a multithreaded
         or multiprocess test environment.
         """
-        with Lock(outpath, mode='a+', truncate=None, timeout=timeout) as fh:
+        lock = Lock(
+            outpath, mode='a+',
+            truncate=None,
+            timeout=timeout,
+            fail_when_locked=False
+        )
+
+        with lock as fh:
 
             if append:
                 fh.seek(0)
