@@ -7,3 +7,4 @@ _configtest.f
 build
 dist
 *.egg-info
+htmlcov

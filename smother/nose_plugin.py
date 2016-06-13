@@ -2,7 +2,7 @@ import logging
 
 from nose.plugins.cover import Coverage
 
-from smother import Smother
+from smother.control import Smother
 
 
 log = logging.getLogger(__name__)

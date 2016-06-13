@@ -31,17 +31,30 @@ class Visitor(NodeVisitor):
         self.line = 1  # which line (1-based) do we populate next?
 
         # a stack of nested contexts
-        self.context = [prefix] if prefix else []
+        self.context = []
+        self.prefix = prefix
         self.current_context = prefix
 
         self.lines = []
+
+    def _update_current_context(self):
+        if self.prefix and self.context:
+            self.current_context = self.prefix + ':' + '.'.join(self.context)
+        elif self.prefix:
+            self.current_context = self.prefix
+        elif self.context:
+            self.current_context = '.'.join(self.context)
+        else:
+            self.current_context = ''
 
     def _filldown(self, lineno):
         """
         Copy current_context into `lines` down up until lineno
         """
         if self.line > lineno:
-            return  # XXX decorated functions make us jump backwards. understand this more
+            # XXX decorated functions make us jump backwards.
+            # understand this more
+            return
 
         self.lines.extend(
             self.current_context for _ in range(self.line, lineno))
@@ -55,15 +68,14 @@ class Visitor(NodeVisitor):
 
         # push a new context onto stack
         self.context.append(node.name)
-        old_context = self.current_context
-        self.current_context = '.'.join(self.context)
+        self._update_current_context()
 
         for _ in map(self.visit, iter_child_nodes(node)):
             pass
 
         # restore current context
         self.context.pop()
-        self.current_context = old_context
+        self._update_current_context()
 
     def generic_visit(self, node):
         if hasattr(node, 'lineno'):
@@ -72,13 +84,12 @@ class Visitor(NodeVisitor):
         for _ in map(self.visit, iter_child_nodes(node)):
             pass
 
-    def visit_Module(self, node):
+    def visit_Module(self, node):  # noqa
         # need to manually insert one line for empty modules like __init__.py
         if not node.body:
             self.lines = [self.current_context]
         else:
             self.generic_visit(node)
-
 
     visit_ClassDef = _add_section
     visit_FunctionDef = _add_section
@@ -129,13 +140,15 @@ class PythonFile(object):
         Build a PythonFile given a dotted module name like a.b.c
         """
         # XXX make this more robust (pyc files? zip archives? etc)
-        path = module_name.replace('.', '/') + '.py'
+        slug = module_name.replace('.', '/')
+        paths = [slug + '.py', slug + '/__init__.py']
 
         # always search from current directory
         for base in [''] + sys.path:
-            fullpath = os.path.join(base, path)
-            if os.path.exists(fullpath):
-                return cls(fullpath, prefix=module_name)
+            for path in paths:
+                fullpath = os.path.join(base, path)
+                if os.path.exists(fullpath):
+                    return cls(fullpath, prefix=module_name)
         else:
             raise ValueError("Module not found: %s" % module_name)
 

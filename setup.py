@@ -5,9 +5,8 @@ setup(
     version='0.0.1',
     packages=find_packages(),
     install_requires = [
-#        'click',
-#        'diff_cover>=0.9',
-#        'more_itertools',
+        'click',
+        'more_itertools',
         'coverage',
         'portalocker>=0.4',
         'six',

@@ -51,7 +51,7 @@ class ContextInterval(namedtuple('ContextInterval', 'filename context'), Interva
         return False
 
 
-def parse_intervals(path, semantic=False):
+def parse_intervals(path, as_context=False):
     """
     Parse path strings into a collection of Intervals.
 
@@ -76,7 +76,7 @@ def parse_intervals(path, semantic=False):
     ----------
     path : str
         Region description (see above)
-    semantic : bool (optional, default=False)
+    as_context : bool (optional, default=False)
         If `True`, return `ContextInterval`s instead of `LineInterval`s.
         If `path` provides a line number or range, the result will include
         all contexts that intersect this line range.
@@ -87,7 +87,7 @@ def parse_intervals(path, semantic=False):
     """
 
     def _regions_from_range():
-        if semantic:
+        if as_context:
             ctxs = list(set(pf.lines[start - 1: stop - 1]))
             return [
                 ContextInterval(filename, ctx)
@@ -110,17 +110,17 @@ def parse_intervals(path, semantic=False):
         stop = stop or start + 1
         return _regions_from_range()
     elif not subpath:  # asked for entire module
-        # XXX This should probably include submodules as well
-        # XXX probably not handling case where module name ends in __init__.py
+        if as_context:
+            return [ContextInterval(filename, pf.prefix)]
         start, stop = 1, pf.line_count + 1
         return _regions_from_range()
     else:  # specified a context name
-        context = pf.prefix + '.' + subpath
+        context = pf.prefix + ':' + subpath
         if context not in pf.lines:
             raise ValueError("%s is not a valid context for %s"
                              % (context, pf.prefix))
-        if semantic:
+        if as_context:
             return [ContextInterval(filename, context)]
         else:
-            start, stop = pf.context_range(subpath)
+            start, stop = pf.context_range(context)
             return [LineInterval(filename, start, stop)]

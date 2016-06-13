@@ -1,11 +1,10 @@
 import csv
 
 import click
-from diff_cover.diff_reporter import GitDiffReporter
-from diff_cover.git_diff import GitDiffTool
 
-from smother import Smother
-from smother.diff import parse_intervals as diff_parse_intervals
+from smother.control import Smother
+from smother.diff import parse_intervals as diff_to_intervals
+from smother.git import GitDiffReport
 from smother.interval import parse_intervals
 
 
@@ -27,11 +26,10 @@ Implementation Goals
 
 
 def _get_diff_regions(branch):
-    reporter = GitDiffReporter(branch, git_diff=GitDiffTool())
-    for diff in reporter._get_included_diff_results():
-        for rng in diff_parse_intervals(diff):
-            print(rng)
-            yield rng
+    report = GitDiffReport(branch)
+    for rng in diff_to_intervals(report):
+        print(rng)
+        yield rng
 
 
 @click.group()
@@ -65,7 +63,7 @@ def lookup(ctx, path):
     """
     Determine which tests intersect a source interval.
     """
-    regions = parse_intervals(path, ctx.obj['semantic'])
+    regions = parse_intervals(path, as_context=ctx.obj['semantic'])
     _report_from_regions(regions, ctx.obj)
 
 

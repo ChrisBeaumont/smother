@@ -77,7 +77,6 @@ CONTEXT_CASES = [
 def test_context_range(code, context, expected):
 
     pf = PythonFile('test.py', prefix='', source=code)
-    print(pf.lines)
     assert pf.context_range(context) == expected
 
 
