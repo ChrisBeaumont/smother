@@ -1,14 +1,12 @@
-import inspect
-import os
-import re
-from importlib import import_module
+import csv
 
 import click
 from diff_cover.diff_reporter import GitDiffReporter
 from diff_cover.git_diff import GitDiffTool
-from more_itertools import unique_justseen
 
 from smother import Smother
+from smother.diff import parse_intervals as diff_parse_intervals
+from smother.interval import parse_intervals
 
 
 """
@@ -20,186 +18,75 @@ Implementation Goals
 * [x] Given a test set, run them
 * Interactive browser
 * Looker/tableau export (list of pairs of context names)
-* [ ] Collect website smother report
+* [x] Collect website smother report
+* [ ] Implement semantic diff
+* [ ] Web dashboard
+* [ ] Test suite
+* [ ] fast
 """
-
-
-# grammar = Grammar(
-#     """
-#     full_path = (path ":" subpath) / path
-#     path = (attr_name "." path) / attr_name
-#     subpath = path / position_path
-#     position_path = range / number
-#
-#     range = number "-" number
-#
-#     attr_name = ~"[_a-z][_a-z0-9]*"i
-#     number = ~"[0-9]+"
-#     """
-# )
-
-"""
-How to parse a git diff
-
-Extract starting line number for the `-`
-@@ -97,7 +97,9 @@ class BaseNotesModel(Model):
-
-start_line = 97
-current_line = 97
-
-for each line:
-    if is a deletion:
-        add current_line to result set
-        current_line++
-    elif is an addition:
-        continue
-        add current_line to result set
-        do not increment
-    else:  # unchanged
-        current_line++
-"""
-
-
-"""
-class Visitor(NodeVisitor):
-
-    grammar = grammar
-
-    def visit_full_path(self, node, children):
-
-        if len(children) == 3:
-            module, _, attr = children
-            return module, attr
-        else:
-            assert len(children) == 1
-            return children[0], None
-
-    def visit_subpath(self, node, children):
-        return children[0]
-
-    def visit_number(self, node, children):
-        return int(node.text)
-
-    def visit_range(self, node, children):
-        start, _, stop = children
-        return (start, stop)
-
-    def visit_attr_name(self, node, children):
-        return node.text
-
-    def visit_path(self, node, children):
-        return node.text
-
-    def generic_visit(self, node, children):
-        if len(children) == 1:
-            return children[0]
-        return children
-"""
-
-PATH_RE = re.compile('^([a-zA-Z0-9_\.]+)(?::([a-zA-Z0-9_\.-]+))?$')
-NUMBER_RE = re.compile('([0-9]+)(?:-([0-9]+))?')
-
-
-def _get_regions(path):
-    try:
-        module, subpath = PATH_RE.match(path).groups('')
-        node = import_module(module)
-    except ImportError:
-        raise ValueError("Invalid path: %s" % path)
-
-    match = NUMBER_RE.match(subpath)
-    if match:
-        start, stop = map(int, match.groups(0))
-        stop = stop or start + 1
-        src = inspect.getsourcefile(node)
-        return [(path, start, stop)]
-    else:
-        try:
-            for attr in filter(None, subpath.split('.')):
-                node = getattr(node, attr)
-        except AttributeError:
-            raise ValueError("Invalid path: %s" % path)
-
-        src, offset = inspect.getsourcelines(node)
-        path = inspect.getabsfile(node)
-        return [(path, offset, offset + len(src))]
-
-
-def _ranges_from_diff(diff):
-    # XXX edge cases aren't quite right here
-    #     a single modified line emits 2 lines of ranges
-    filepath = None
-    current_line = None
-    for line in diff.splitlines():
-        if line.startswith('diff'):
-            # diff --git a/old_path b/new_path
-            #              --------
-            filepath = os.path.abspath(line.split(' ')[2][2:])
-        elif line.startswith('@@'):
-            # @@ -96,6 +96,7 @@
-            #     --
-            current_line = int(line.split(',')[0][4:])
-        elif line.startswith('+++'):
-            continue
-        elif line.startswith('---'):
-            continue
-        elif line.startswith('index'):
-            continue
-        elif line.startswith('new'):
-            continue
-        elif line.startswith('+'):
-            yield filepath, current_line, current_line + 1
-            # don't increment line here, we didn't consume a line
-            # in the original file.
-        elif line.startswith('-'):
-            yield filepath, current_line, current_line + 1
-            current_line += 1
-        elif line.startswith(' '):
-            current_line += 1
-        else:
-            raise AssertionError("Unexpected diff line: %s" % line)
 
 
 def _get_diff_regions(branch):
     reporter = GitDiffReporter(branch, git_diff=GitDiffTool())
     for diff in reporter._get_included_diff_results():
-        for rng in unique_justseen(_ranges_from_diff(diff)):
+        for rng in diff_parse_intervals(diff):
+            print(rng)
             yield rng
 
 
 @click.group()
-def cli():
-    pass
+@click.option('--report', '-r', default='.smother', help='Smother report file')
+@click.option(
+    '--semantic', '-s',
+    help='Map coverage to semantic blocks (functions and classes) '
+         'instead of individual line numbers.',
+    is_flag=True,
+)
+@click.pass_context
+def cli(ctx, report, semantic):
+    """
+    Query or manipulate smother reports
+    """
+    ctx.obj = {'report': report, 'semantic': semantic}
 
 
-def _report_from_regions(regions):
-    regions = list(regions)
-    smother = Smother.load()
+def _report_from_regions(regions, opts):
+    report_file = opts['report']
+
+    smother = Smother.load(report_file)
     result = smother.query_context(regions)
     result.report()
 
 
 @cli.command()
 @click.argument("path")
-def lookup(path):
-
-    regions = _get_regions(path)
-    _report_from_regions(regions)
+@click.pass_context
+def lookup(ctx, path):
+    """
+    Determine which tests intersect a source interval.
+    """
+    regions = parse_intervals(path, ctx.obj['semantic'])
+    _report_from_regions(regions, ctx.obj)
 
 
 @cli.command()
 @click.argument("branch", default="")
-def diff(branch):
-
+@click.pass_context
+def diff(ctx, branch):
+    """
+    Determine which tests intersect a git diff.
+    """
     regions = _get_diff_regions(branch)
-    _report_from_regions(regions)
+    _report_from_regions(regions, ctx.obj)
 
 
 @cli.command()
 @click.argument('src', nargs=-1, type=click.Path())
 @click.argument('dst', nargs=1, type=click.Path())
 def combine(src, dst):
-
+    """
+    Combine several smother reports.
+    """
     result = None
     for infile in src:
         sm = Smother.load(infile)
@@ -209,6 +96,21 @@ def combine(src, dst):
             result |= sm
 
     result.write(dst)
+
+
+@cli.command()
+@click.argument('dst', type=click.File('w'))
+@click.pass_context
+def flatten(ctx, dst):
+    """
+    Flatten a coverage file into a CSV
+    of source_context, testname
+    """
+    sm = Smother.load(ctx.obj['report'])
+    semantic = ctx.obj['semantic']
+    writer = csv.writer(dst)
+    dst.write("source_context, test_context\n")
+    writer.writerows(sm.iter_records(semantic=semantic))
 
 
 if __name__ == "__main__":

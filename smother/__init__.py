@@ -1,7 +1,11 @@
 import json
+from collections import defaultdict
 
 import six
 from portalocker import Lock
+
+from smother.python import InvalidPythonFile
+from smother.python import PythonFile
 
 
 class QueryResult(object):
@@ -96,16 +100,53 @@ class Smother(object):
     def query_context(self, regions):
 
         result = set()
-        for filename, start, stop in regions:
-            for context, hits in self.data.items():
-                if context in result:
+
+        for region in regions:
+            try:
+                pf = PythonFile(region.filename)
+            except InvalidPythonFile:
+                continue
+
+            for test_context, hits in self.data.items():
+                if test_context in result:
                     continue
 
-                for lineno in hits.get(filename, []):
-                    if (lineno >= start) and (lineno < stop):
-                        result.add(context)
-                        break
-                    elif lineno >= stop:
-                        break
+                if region.intersects(pf, hits.get(region.filename, [])):
+                    result.add(test_context)
 
         return QueryResult(result)
+
+    def _invert(self):
+        """
+        Invert coverage data from {test_context: {file: line}}
+        to {file: {test_context: line}}
+        """
+        result = defaultdict(dict)
+        for test_context, src_context in six.iteritems(self.data):
+            for src, lines in six.iteritems(src_context):
+                result[src][test_context] = lines
+        return result
+
+    def iter_records(self, semantic=False):
+
+        inverted = self._invert()
+        for src, coverage in six.iteritems(inverted):
+            if semantic:
+                pf = PythonFile(src)
+
+            source2test = defaultdict(set)
+            for test_context, lines in six.iteritems(coverage):
+                for line in lines:
+                    if semantic:
+                        # coverage line count is 1-based
+                        try:
+                            src_context = pf.lines[line - 1]
+                        except IndexError:
+                            import ipdb; ipdb.set_trace()
+                    else:
+                       src_context = "{}:{}".format(src, line)
+                    source2test[src_context].add(test_context)
+
+            for src_context in sorted(source2test):
+                for test_context in sorted(source2test[src_context]):
+                    yield src_context, test_context

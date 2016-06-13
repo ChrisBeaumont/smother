@@ -18,6 +18,9 @@ setup(
         ],
         'console_scripts': [
             'smother = smother.cli:cli'
+        ],
+        'pytest11': [
+            'smother = smother.pytest_plugin',
         ]
     },
 )
