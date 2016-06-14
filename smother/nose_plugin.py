@@ -24,7 +24,8 @@ class SmotherNose(Coverage):
             self.output = options.smother_output
             self.append = options.smother_append
             self.smother = Smother(self.coverInstance)
-            self.coverInstance.stop() # XXX why is this needed to capture the first test?
+            # XXX why is this needed to capture the first test?
+            self.coverInstance.stop()
 
     def options(self, parser, env):
         super(Coverage, self).options(parser, env)

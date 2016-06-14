@@ -37,7 +37,8 @@ class LineInterval(namedtuple('LineInterval', 'filename start stop'),
         return False
 
 
-class ContextInterval(namedtuple('ContextInterval', 'filename context'), Interval):
+class ContextInterval(namedtuple('ContextInterval', 'filename context'),
+                      Interval):
     """
     Interval defined by a `context` identifier within a file.
     """
@@ -46,7 +47,7 @@ class ContextInterval(namedtuple('ContextInterval', 'filename context'), Interva
         assert python_file.filename == self.filename
 
         for line in lines:
-            if python_file.lines[line - 1] == self.context:
+            if python_file.context(line) == self.context:
                 return True
         return False
 

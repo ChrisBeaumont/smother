@@ -187,6 +187,19 @@ class PythonFile(object):
 
         return lo, hi + 1
 
+    def context(self, line):
+        """
+        Return the context for a given 1-offset line number.
+        """
+        # XXX due to a limitation in Visitor,
+        # non-python code after the last python code
+        # in a file is not added to self.lines, so we
+        # have to guard against IndexErrors.
+        idx = line - 1
+        if idx >= len(self.lines):
+            return self.prefix
+        return self.lines[idx]
+
 
 if __name__ == "__main__":
     # Report contexts of this file

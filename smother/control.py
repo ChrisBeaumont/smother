@@ -1,11 +1,24 @@
 import json
+import os
 from collections import defaultdict
+from contextlib import contextmanager
 
 import six
 from portalocker import Lock
 
 from smother.python import InvalidPythonFile
 from smother.python import PythonFile
+
+
+@contextmanager
+def noclose(file):
+    """
+    A "no-op" contextmanager that prevents files from closing.
+    """
+    try:
+        yield file
+    finally:
+        pass
 
 
 class QueryResult(object):
@@ -33,6 +46,9 @@ class Smother(object):
         }
 
     def write_coverage(self):
+        # coverage won't write data if it hasn't been started.
+        self.coverage.start()
+        self.coverage.stop()
         data = {}
         for cover in six.itervalues(self.data):
             for path, lines in six.iteritems(cover):
@@ -43,13 +59,13 @@ class Smother(object):
         self.coverage.collector.data = data
         self.coverage.save()
 
-    def write(self, outpath, append=False, timeout=60):
+    def write(self, file_or_path, append=False, timeout=10):
         """
         Write Smother results to a file.
 
         Parameters
         ----------
-        outpath : str
+        fiile_or_path : str
             Path to write report to
         append : bool
             If True, read an existing smother report from `outpath`
@@ -60,22 +76,30 @@ class Smother(object):
 
         Note
         ----
-        Append mode is atomic, and can be run in a multithreaded
-        or multiprocess test environment.
+        Append mode is atomic when file_or_path is a path,
+        and can be safely run in a multithreaded or
+        multiprocess test environment.
         """
-        lock = Lock(
-            outpath, mode='a+',
-            truncate=None,
-            timeout=timeout,
-            fail_when_locked=False
-        )
+        if isinstance(file_or_path, six.string_types):
+            outfile = Lock(
+                file_or_path, mode='a+',
+                truncate=None,
+                timeout=timeout,
+                fail_when_locked=False
+            )
+        else:
+            outfile = noclose(file_or_path)
 
-        with lock as fh:
+        with outfile as fh:
 
             if append:
                 fh.seek(0)
-                other = Smother.load(fh)
-                self |= other
+                try:
+                    other = Smother.load(fh)
+                except ValueError:  # no smother data
+                    pass
+                else:
+                    self |= other
 
             fh.seek(0)
             fh.truncate()  # required to overwrite data in a+ mode
@@ -86,16 +110,10 @@ class Smother(object):
         if isinstance(file_or_path, six.string_types):
             infile = open(file_or_path)
         else:
-            infile = file_or_path
+            infile = noclose(file_or_path)
 
-        try:
-            data = json.load(infile)
-        except ValueError:
-            data = {}
-        finally:
-            # close the file if we opened it
-            if infile != file_or_path:
-                infile.close()
+        with infile as fh:
+            data = json.load(fh)
 
         result = cls()
         result.data = data
@@ -118,12 +136,20 @@ class Smother(object):
             except InvalidPythonFile:
                 continue
 
-            for test_context, hits in self.data.items():
+            # region and/or coverage report may use paths
+            # relative to this directory. Ensure we find a match
+            # if they use different conventions.
+            paths = {
+                os.path.abspath(region.filename),
+                os.path.relpath(region.filename)
+            }
+            for test_context, hits in six.iteritems(self.data):
                 if test_context in result:
                     continue
 
-                if region.intersects(pf, hits.get(region.filename, [])):
-                    result.add(test_context)
+                for path in paths:
+                    if region.intersects(pf, hits.get(path, [])):
+                        result.add(test_context)
 
         return QueryResult(result)
 
@@ -150,12 +176,9 @@ class Smother(object):
                 for line in lines:
                     if semantic:
                         # coverage line count is 1-based
-                        try:
-                            src_context = pf.lines[line - 1]
-                        except IndexError:
-                            import ipdb; ipdb.set_trace()
+                        src_context = pf.context(line)
                     else:
-                       src_context = "{}:{}".format(src, line)
+                        src_context = "{}:{}".format(src, line)
                     source2test[src_context].add(test_context)
 
             for src_context in sorted(source2test):

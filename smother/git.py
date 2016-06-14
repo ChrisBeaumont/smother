@@ -4,6 +4,7 @@ from subprocess import Popen
 
 from unidiff import PatchSet
 
+from smother.diff import DiffReporter
 from smother.python import PythonFile
 
 
@@ -42,11 +43,15 @@ def git_show(ref, path):
     return execute(cmd)
 
 
-class GitDiffReport(object):
+class GitDiffReporter(DiffReporter):
 
-    def __init__(self, ref, diff=None):
+    def __init__(self, ref='HEAD', diff=None):
         self.ref = ref
-        self.patch_set = diff or git_diff(ref)
+        self._patch_set = diff or git_diff(ref)
+
+    @property
+    def patch_set(self):
+        return self._patch_set
 
     def old_file(self, path):
         if path == '/dev/null':

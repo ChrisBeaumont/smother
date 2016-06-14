@@ -4,12 +4,17 @@ setup(
     name='smother',
     version='0.0.1',
     packages=find_packages(),
-    install_requires = [
+    install_requires=[
         'click',
         'more_itertools',
         'coverage',
         'portalocker>=0.4',
         'six',
+        'unidiff',
+    ],
+    test_requires=[
+        'mock',
+        'pytest',
     ],
     entry_points={
         'nose.plugins.0.10': [
@@ -22,4 +27,7 @@ setup(
             'smother = smother.pytest_plugin',
         ]
     },
+    package_data={
+        '': ["*.smother*"],
+    }
 )

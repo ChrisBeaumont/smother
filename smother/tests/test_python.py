@@ -55,9 +55,10 @@ VISITOR_CASES = [
     (case_inner_func, ctx_inner_func),
     (case_decorated_method, ctx_decorated_method),
 ]
+IDS = ['func', 'class', 'decorated_func', 'inner_func', 'decorated_method']
 
 
-@pytest.mark.parametrize('code,expected', VISITOR_CASES)
+@pytest.mark.parametrize('code,expected', VISITOR_CASES, ids=IDS)
 def test_visitor(code, expected):
     ast = parse(code)
     visitor = Visitor(prefix='')
@@ -71,9 +72,11 @@ CONTEXT_CASES = [
     (case_class, 'A.method', (4, 6)),
     (case_decorated_method, 'Foo', (2, 6)),
 ]
+CONTEXT_IDS = ['func', 'class', 'class_inner', 'decorated_method']
 
 
-@pytest.mark.parametrize("code,context,expected", CONTEXT_CASES)
+@pytest.mark.parametrize(
+    "code,context,expected", CONTEXT_CASES, ids=CONTEXT_IDS)
 def test_context_range(code, context, expected):
 
     pf = PythonFile('test.py', prefix='', source=code)

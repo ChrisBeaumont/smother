@@ -68,4 +68,3 @@ class Plugin(object):
         self.smother.write(self.output, append=self.append)
         if self.cover_report:
             self.smother.write_coverage()
-

@@ -3,12 +3,12 @@ from difflib import unified_diff
 import pytest
 from unidiff import PatchSet
 
-from smother.diff import parse_intervals
-from smother.interval import ContextInterval as I
+from smother.diff import DiffReporter
+from smother.interval import ContextInterval
 from smother.python import PythonFile
 
 
-class TestDiffReport(object):
+class TestDiffReporter(DiffReporter):
 
     def __init__(self, old, new):
         self.old = old
@@ -19,7 +19,11 @@ class TestDiffReport(object):
             fromfile='test.py',
             tofile='test.py',
         )
-        self.patch_set = PatchSet(diff)
+        self._diff = diff
+
+    @property
+    def patch_set(self):
+        return PatchSet(self._diff)
 
     def old_file(self, path):
         return PythonFile('test.py', source=self.old)
@@ -69,15 +73,17 @@ def foo():
     pass
 """
 
+I = ContextInterval
 CASES = [
-    ('one_deletion', one_deletion, [I('test.py', 'test:foo')]),
-    ('one_inner_addition', one_inner_addition, [I('test.py', 'test:foo.bar')]),
-    ('one_outer_addition', one_outer_addition, [I('test.py', 'test:foo')]),
-    ('modification', modification, [I('test.py', 'test:foo.bar')])
+    (one_deletion, [I('test.py', 'test:foo')]),
+    (one_inner_addition, [I('test.py', 'test:foo.bar')]),
+    (one_outer_addition, [I('test.py', 'test:foo')]),
+    (modification, [I('test.py', 'test:foo.bar')])
 ]
+IDS = ['deletion', 'inner_addition', 'outer_addition', 'modification']
 
 
-@pytest.mark.parametrize('label,new,expected', CASES)
-def test_parse(label, new, expected):
-    diff = TestDiffReport(old, new)
-    assert list(parse_intervals(diff)) == expected
+@pytest.mark.parametrize('new,expected', CASES, ids=IDS)
+def test_parse(new, expected):
+    diff = TestDiffReporter(old, new)
+    assert list(diff.changed_intervals()) == expected

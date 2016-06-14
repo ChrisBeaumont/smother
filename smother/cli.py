@@ -3,33 +3,8 @@ import csv
 import click
 
 from smother.control import Smother
-from smother.diff import parse_intervals as diff_to_intervals
-from smother.git import GitDiffReport
+from smother.git import GitDiffReporter
 from smother.interval import parse_intervals
-
-
-"""
-Implementation Goals
-
-* [x] Give a filename:lineno, return all tests
-* [x] Give a diff, return all tests
-* [x] Given an import identifier, return all tests
-* [x] Given a test set, run them
-* Interactive browser
-* Looker/tableau export (list of pairs of context names)
-* [x] Collect website smother report
-* [ ] Implement semantic diff
-* [ ] Web dashboard
-* [ ] Test suite
-* [ ] fast
-"""
-
-
-def _get_diff_regions(branch):
-    report = GitDiffReport(branch)
-    for rng in diff_to_intervals(report):
-        print(rng)
-        yield rng
 
 
 @click.group()
@@ -50,7 +25,6 @@ def cli(ctx, report, semantic):
 
 def _report_from_regions(regions, opts):
     report_file = opts['report']
-
     smother = Smother.load(report_file)
     result = smother.query_context(regions)
     result.report()
@@ -74,24 +48,21 @@ def diff(ctx, branch):
     """
     Determine which tests intersect a git diff.
     """
-    regions = _get_diff_regions(branch)
+    regions = GitDiffReporter(branch).changed_intervals()
     _report_from_regions(regions, ctx.obj)
 
 
 @cli.command()
-@click.argument('src', nargs=-1, type=click.Path())
+@click.argument('src', nargs=-1, type=click.File())
 @click.argument('dst', nargs=1, type=click.Path())
 def combine(src, dst):
     """
     Combine several smother reports.
     """
-    result = None
+    result = Smother()
+
     for infile in src:
-        sm = Smother.load(infile)
-        if not result:
-            result = sm
-        else:
-            result |= sm
+        result |= Smother.load(infile)
 
     result.write(dst)
 
@@ -109,7 +80,3 @@ def flatten(ctx, dst):
     writer = csv.writer(dst)
     dst.write("source_context, test_context\n")
     writer.writerows(sm.iter_records(semantic=semantic))
-
-
-if __name__ == "__main__":
-    cli()
