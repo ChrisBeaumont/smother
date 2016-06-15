@@ -115,8 +115,11 @@ class PythonFile(object):
             (ie a/b/c.py -> a.b.c)
         """
         self.filename = filename
+
         if prefix is None:
-            prefix = SUFFIX_RE.sub('', self.filename).replace('/', '.')
+            self.prefix = self._module_name(filename)
+        else:
+            self.prefix = prefix
 
         if source is None:
             with open(filename) as infile:
@@ -129,10 +132,28 @@ class PythonFile(object):
         except SyntaxError:
             raise InvalidPythonFile(self.filename)
 
-        visitor = Visitor(prefix=prefix)
+        visitor = Visitor(prefix=self.prefix)
         visitor.visit(self.ast)
         self.lines = visitor.lines
-        self.prefix = prefix
+
+
+    @staticmethod
+    def _module_name(filename):
+        """
+        Try to find a module name for a file path
+        by stripping off a prefix found in sys.modules.
+        """
+
+        absfile = os.path.abspath(filename)
+        match = filename
+
+        for base in [''] + sys.path:
+            base = os.path.abspath(base)
+            if absfile.startswith(base):
+                match = absfile[len(base):]
+                break
+
+        return SUFFIX_RE.sub('', match).lstrip('/').replace('/', '.')
 
     @classmethod
     def from_modulename(cls, module_name):

@@ -1,3 +1,4 @@
+import os
 from ast import parse
 
 import pytest
@@ -91,3 +92,8 @@ def test_default_prefix():
     assert PythonFile('a/b/c.pyo', source='').prefix == 'a.b.c'
     assert PythonFile('a/b/c.pyw', source='').prefix == 'a.b.c'
     assert PythonFile('a/b/c/__init__.py', source='').prefix == 'a.b.c'
+
+
+def test_prefix_for_absolute_paths():
+    path = os.path.abspath('smother/tests/demo.py')
+    assert PythonFile(path).prefix == 'smother.tests.demo'

@@ -55,7 +55,7 @@ class Plugin(object):
         if self.first_test:
             self.first_test = False
             self.coverage.stop()
-            self.smother.save_context("<setup>")
+            self.smother.save_context("")
         self.smother.start()
 
     def pytest_runtest_teardown(self, item, nextitem):
