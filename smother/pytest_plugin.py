@@ -7,17 +7,15 @@ def pytest_addoption(parser):
     group = parser.getgroup(
         'smother', 'smother reporting')
     group.addoption('--smother', action='append', default=[], metavar='path',
-                    nargs='?', const=True, dest='cov_source',
+                    nargs='?', const=True, dest='smother_source',
                     help='measure coverage for filesystem path '
                     '(multi-allowed)')
     group.addoption('--smother-config', action='store', default='.coveragerc',
-                    metavar='path',
                     help='config file for coverage, default: .coveragerc')
     group.addoption('--smother-append', action='store_true', default=False,
                     help='append to existing smother report, '
                          'default: False')
     group.addoption('--smother-output', action='store', default='.smother',
-                    metavar='path',
                     help='output file for smother data. '
                          'default: .smother')
     group.addoption('--smother-cover', action='store_true', default=False,
@@ -27,7 +25,7 @@ def pytest_addoption(parser):
 
 def pytest_configure(config):
     """Activate plugin if appropriate."""
-    if config.getvalue('cov_source'):
+    if config.getvalue('smother_source'):
         if not config.pluginmanager.hasplugin('_smother'):
             plugin = Plugin(config.option)
             config.pluginmanager.register(plugin, '_smother')
@@ -37,7 +35,7 @@ class Plugin(object):
 
     def __init__(self, options):
         self.coverage = coverage.coverage(
-            source=options.cov_source,
+            source=options.smother_source,
             config_file=options.smother_config,
         )
 
