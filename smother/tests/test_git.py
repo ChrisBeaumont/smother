@@ -2,6 +2,7 @@ from subprocess import CalledProcessError
 
 import pytest
 from mock import patch
+from unidiff import PatchSet
 
 from smother import git
 
@@ -62,3 +63,23 @@ def test_git_show():
     with patch.object(git, 'execute') as mock:
         git.git_show('origin/master', 'a')
         mock.assert_called_once_with(['git', 'show', 'origin/master:a'])
+
+
+@pytest.mark.integration
+class TestGitDiffReporter(object):
+
+    def test_old_file(self):
+
+        reporter = git.GitDiffReporter('4279eac5', diff='skip')
+        pf = reporter.old_file('a/smother/tests/demo.py')
+        assert len(pf.source) == 153
+
+    def test_new_file(self):
+
+        reporter = git.GitDiffReporter('4279eac5', diff='skip')
+        pf = reporter.new_file('b/smother/tests/demo.py')
+        assert pf.source == open('smother/tests/demo.py').read()
+
+    def test_patch_set(self):
+        reporter = git.GitDiffReporter('07ac1490a')
+        assert isinstance(reporter.patch_set, PatchSet)
