@@ -32,6 +32,16 @@ def a():
 """
 ctx_decorated_function = ['', '', '', 'a', 'a', 'a']
 
+case_double_decorated_function = """
+x = 5
+
+@dec1
+@dec2
+def a():
+    pass
+"""
+ctx_double_decorated_function = ['', '', '', 'a', 'a', 'a', 'a']
+
 case_inner_func = """
 
 def a():
@@ -53,10 +63,12 @@ VISITOR_CASES = [
     (case_func, ctx_func),
     (case_class, ctx_class),
     (case_decorated_function, ctx_decorated_function),
+    (case_double_decorated_function, ctx_double_decorated_function),
     (case_inner_func, ctx_inner_func),
     (case_decorated_method, ctx_decorated_method),
 ]
-IDS = ['func', 'class', 'decorated_func', 'inner_func', 'decorated_method']
+IDS = ['func', 'class', 'decorated_func',
+       'dbl_dec', 'inner_func', 'decorated_method']
 
 
 @pytest.mark.parametrize('code,expected', VISITOR_CASES, ids=IDS)
