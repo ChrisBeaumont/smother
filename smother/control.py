@@ -164,7 +164,7 @@ class Smother(object):
                 result[src][test_context] = lines
         return result
 
-    def iter_records(self, semantic=False):
+    def iter_records(self, semantic=False, sort=True):
 
         inverted = self._invert()
         for src, coverage in six.iteritems(inverted):
