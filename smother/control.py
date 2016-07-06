@@ -169,7 +169,10 @@ class Smother(object):
         inverted = self._invert()
         for src, coverage in six.iteritems(inverted):
             if semantic:
-                pf = PythonFile(src)
+                try:
+                    pf = PythonFile(src)
+                except IOError:
+                    continue
 
             source2test = defaultdict(set)
             for test_context, lines in six.iteritems(coverage):
@@ -181,6 +184,10 @@ class Smother(object):
                         src_context = "{}:{}".format(src, line)
                     source2test[src_context].add(test_context)
 
-            for src_context in sorted(source2test):
-                for test_context in sorted(source2test[src_context]):
+
+            for src_context in sorted(source2test) if sort else source2test:
+                test_contexts = source2test[src_context]
+                if sort:
+                    test_contexts = sorted(test_contexts)
+                for test_context in test_contexts:
                     yield src_context, test_context
