@@ -1,4 +1,4 @@
-import csv
+import csv as _csv
 
 import click
 
@@ -70,13 +70,13 @@ def combine(src, dst):
 @cli.command()
 @click.argument('dst', type=click.File('w'))
 @click.pass_context
-def flatten(ctx, dst):
+def csv(ctx, dst):
     """
     Flatten a coverage file into a CSV
     of source_context, testname
     """
     sm = Smother.load(ctx.obj['report'])
     semantic = ctx.obj['semantic']
-    writer = csv.writer(dst)
+    writer = _csv.writer(dst)
     dst.write("source_context, test_context\n")
     writer.writerows(sm.iter_records(semantic=semantic))
