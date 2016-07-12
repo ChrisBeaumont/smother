@@ -1,6 +1,7 @@
 import csv as _csv
 
 import click
+import coverage
 
 from smother.control import Smother
 from smother.git import GitDiffReporter
@@ -80,3 +81,14 @@ def csv(ctx, dst):
     writer = _csv.writer(dst)
     dst.write("source_context, test_context\n")
     writer.writerows(sm.iter_records(semantic=semantic))
+
+
+@cli.command()
+@click.pass_context
+def to_coverage(ctx):
+    """
+    Produce a .coverage file from a smother file
+    """
+    sm = Smother.load(ctx.obj['report'])
+    sm.coverage = coverage.coverage()
+    sm.write_coverage()
