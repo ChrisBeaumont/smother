@@ -11,11 +11,11 @@ from smother.python import PythonFile
 def execute(cmd):
     """Run a shell command and return stdout"""
     proc = Popen(cmd, stdout=PIPE)
-    proc.wait()
+    stdout, _ = proc.communicate()
     if proc.returncode != 0:
         raise CalledProcessError(proc.returncode, " ".join(cmd))
 
-    return proc.stdout.read().decode('utf8')
+    return stdout.decode('utf8')
 
 
 def git_diff(ref=None):
