@@ -57,8 +57,12 @@ class GitDiffReporter(DiffReporter):
         if path == '/dev/null':
             return
 
-        # git diff prefixes path with a/
-        filename = path[2:]
+        # git diff may prefix the path with a/
+        if path.startswith('a/'):
+            filename = path[2:]
+        else:
+            filename = path
+
         source = git_show(self.ref, filename)
         return PythonFile(filename, source=source)
 
@@ -66,5 +70,10 @@ class GitDiffReporter(DiffReporter):
         if path == '/dev/null':
             return
 
-        # git diff prefixes path with b/
-        return PythonFile(path[2:])
+        # git diff may prefix the path with b/
+        if path.startswith('b/'):
+            filename = path[2:]
+        else:
+            filename = path
+
+        return PythonFile(filename)

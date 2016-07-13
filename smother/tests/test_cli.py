@@ -63,7 +63,7 @@ def test_combine():
         assert json.load(tf) == expected
 
 
-def test_flatten():
+def test_csv():
     expected = '\n'.join([
         'source_context, test_context',
         'smother/tests/demo.py:11,test2',
@@ -76,7 +76,7 @@ def test_flatten():
         result = runner.invoke(
             cli,
             ['-r', 'smother/tests/.smother_2',
-             'flatten',
+             'csv',
              tf.name
              ]
         )
@@ -85,7 +85,7 @@ def test_flatten():
         assert tf.read() == expected
 
 
-def test_semantic_flatten():
+def test_semantic_csv():
     expected = '\n'.join([
         'source_context, test_context',
         'smother.tests.demo,test4',
@@ -99,7 +99,7 @@ def test_semantic_flatten():
             cli,
             ['-r', 'smother/tests/.smother_2',
              '--semantic',
-             'flatten',
+             'csv',
              tf.name
              ]
         )

@@ -24,10 +24,10 @@ def cli(ctx, report, semantic):
     ctx.obj = {'report': report, 'semantic': semantic}
 
 
-def _report_from_regions(regions, opts):
+def _report_from_regions(regions, opts, **kwargs):
     report_file = opts['report']
     smother = Smother.load(report_file)
-    result = smother.query_context(regions)
+    result = smother.query_context(regions, **kwargs)
     result.report()
 
 
@@ -49,8 +49,9 @@ def diff(ctx, branch):
     """
     Determine which tests intersect a git diff.
     """
-    regions = GitDiffReporter(branch).changed_intervals()
-    _report_from_regions(regions, ctx.obj)
+    diff = GitDiffReporter(branch)
+    regions = diff.changed_intervals()
+    _report_from_regions(regions, ctx.obj, file_factory=diff.old_file)
 
 
 @cli.command()

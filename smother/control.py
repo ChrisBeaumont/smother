@@ -126,13 +126,28 @@ class Smother(object):
                 self.data[ctx][src] = sorted(set(old + lines))
         return self
 
-    def query_context(self, regions):
+    def query_context(self, regions, file_factory=PythonFile):
+        """
+        Return which set of test contexts intersect a set of code regions.
 
+
+        Parameters
+        ----------
+        regions: A sequence of Intervals
+
+        file_factory: Callable (optional, default PythonFile)
+            A callable that takes a filename and
+            returns a PythonFile object.
+
+        Returns
+        -------
+        A QueryResult
+        """
         result = set()
 
         for region in regions:
             try:
-                pf = PythonFile(region.filename)
+                pf = file_factory(region.filename)
             except InvalidPythonFile:
                 continue
 
@@ -183,7 +198,6 @@ class Smother(object):
                     else:
                         src_context = "{}:{}".format(src, line)
                     source2test[src_context].add(test_context)
-
 
             for src_context in sorted(source2test) if sort else source2test:
                 test_contexts = source2test[src_context]

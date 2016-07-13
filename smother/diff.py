@@ -63,10 +63,16 @@ class DiffReporter(object):
 
     @abstractmethod
     def old_file(self, path):
+        """
+        Given an old file name from a diff report, return a PythonFile
+        """
         pass
 
     @abstractmethod
     def new_file(self, path):
+        """
+        Given a new file name from a diff report, return a PythonFile
+        """
         pass
 
     def changed_intervals(self):
