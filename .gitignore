@@ -8,3 +8,5 @@ build
 dist
 *.egg-info
 htmlcov
+_build
+_static
