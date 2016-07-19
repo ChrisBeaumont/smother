@@ -1,6 +1,6 @@
 ## Smother
 
-Smother is a wrapper utility around [coverage.py] that measures code coverage
+Smother is a wrapper utility around [coverage.py](https://coverage.readthedocs.io/en/coverage-4.1/) that measures code coverage
 separately for each test in a test suite. It's main features include:
 
  * Fast and reliable coverage tracking using [coverage.py](https://coverage.readthedocs.io/en/coverage-4.1/).
