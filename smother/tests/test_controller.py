@@ -72,5 +72,3 @@ def test_iter_records_semantic():
 
     expected = [('smother.tests.demo:foo', 'test1')]
     assert list(smother.iter_records(semantic=True)) == expected
-
-

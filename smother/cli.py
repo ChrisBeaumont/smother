@@ -1,4 +1,5 @@
 import csv as _csv
+import os
 
 import click
 import coverage
@@ -82,6 +83,16 @@ def csv(ctx, dst):
     writer = _csv.writer(dst)
     dst.write("source_context, test_context\n")
     writer.writerows(sm.iter_records(semantic=semantic))
+
+
+@cli.command()
+@click.pass_context
+def erase(ctx):
+    """
+    Erase the existing smother report.
+    """
+    if os.path.exists(ctx.obj['report']):
+        os.remove(ctx.obj['report'])
 
 
 @cli.command()
