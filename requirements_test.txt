@@ -1,4 +1,4 @@
-coveralls
+python-coveralls
 pytest
 pytest-cov
 mock
