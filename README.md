@@ -30,3 +30,5 @@ smother diff | xargs py.test    # just run them!
 smother to_coverage             # build a vanilla .coverage file from a .smother file
 smother csv test.csv            # dump all (application, test) pairs to a file
 ```
+
+## [Full Documentation](http://smother.readthedocs.io/en/latest/)
