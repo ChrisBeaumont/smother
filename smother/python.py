@@ -136,7 +136,6 @@ class PythonFile(object):
         visitor.visit(self.ast)
         self.lines = visitor.lines
 
-
     @staticmethod
     def _module_name(filename):
         """
