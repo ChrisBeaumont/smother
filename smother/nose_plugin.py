@@ -16,16 +16,23 @@ class SmotherNose(Coverage):
         self.smother.save_context("%s:%s" % test.address()[1:3])
 
     def beforeTest(self, test):
+
+        # Save coverage from before first test as an unlabeled
+        # context. This captures coverage during import.
+        if self.first_test:
+            self.coverInstance.stop()
+            self.smother.save_context("")
+            self.first_test = False
+
         self.smother.start()
 
     def configure(self, options, conf):
         super(SmotherNose, self).configure(options, conf)
         if self.enabled:
+            self.first_test = True
             self.output = options.smother_output
             self.append = options.smother_append
             self.smother = Smother(self.coverInstance)
-            # XXX why is this needed to capture the first test?
-            self.coverInstance.stop()
 
     def options(self, parser, env):
         super(Coverage, self).options(parser, env)

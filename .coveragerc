@@ -7,6 +7,7 @@ exclude_lines =
 
 [run]
 omit =
-    # testing plugin with plugin is too tricky
+    # measuring coverage of the plugins is too tricky
     *pytest_plugin*
+    *nose_plugin*
     */tests/*

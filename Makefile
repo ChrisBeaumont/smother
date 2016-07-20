@@ -4,7 +4,7 @@ setup:
 
 test:
 	smother erase
-	py.test smother
+	py.test --smother=smother --smother-cover --smother-append smother
 	coverage html
 	coverage report --show-missing
 
