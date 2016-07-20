@@ -1,5 +1,6 @@
 import json
 import os
+import platform
 from subprocess import check_call
 from tempfile import NamedTemporaryFile
 
@@ -16,6 +17,12 @@ expected_pytest = {
     "smother/tests/demo_testsuite.py::test_bar": {demo.__file__: [12]},
     "smother/tests/demo_testsuite.py::test_bar2": {demo.__file__: [12]},
 }
+
+
+if platform.python_implementation() == 'PyPy':
+    # CPython marks the last of a multiline string. PyPy marks the first.
+    expected_nose[""][demo.__file__] = [1, 7, 11]
+    expected_pytest[""][demo.__file__] = [1, 7, 11]
 
 
 def test_nose_collection():
