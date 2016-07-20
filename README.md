@@ -37,7 +37,7 @@ smother csv test.csv            # dump all (application, test) pairs to a file
 
 ## Why?
 
-Smother was designed to make it easier to work with legacy codebases. Such codebases often have several properties which make rapid iteration difficult:
+Smother was designed to make it easier to work with legacy codebases. Such codebases often have several properties that make rapid iteration difficult:
 
  * **Long-running test suites.** The initial codebase that smother was designed for took nearly 24 hours of CPU time to run its 11K tests. `smother diff` makes it easier to select a (hopefully much) smaller subset of
  tests to re-run to quickly identify possible regressions.

@@ -39,19 +39,19 @@ By default, the code sections above are converted to a range of line
 numbers, and smother looks for tests which also visit these line numbers.
 However smother also takes a ``--semantic`` keyword. In semantic mode,
 regions are expanded into the smallest function, class, or module
-definition that contains the entire region. For example these
-two descriptions might expand to the same section of code in
-semantic mode, if Line 21 falls somewhere inside the class body
-of Visitor (and not inside a more specific function):
+definition that contains the entire region. For example, consider
+a `particular line in smother's source <https://github.com/ChrisBeaumont/smother/blob/9244410fa9100eb03f68be436b3fc54991258c93/smother/python.py#L34>`_.
+The following lines all expand to the same section of code in semantic mode:
 
 ::
 
-    smother --semantic smother lookup smother.python:21
-    smother --semantic smother lookup smother.python:Visitor
+    smother --semantic lookup smother.python:34
+    smother --semantic lookup smother.python:24-38
+    smother --semantic lookup smother.python:Visitor.__init__
 
 
-This is primarily useful for diff reporting (below), but can
-be enabled manually as well.
+This is primarily useful for diff reporting and CSV output (below), but can
+be enabled manually in any context.
 
 Diff Reporting
 --------------
