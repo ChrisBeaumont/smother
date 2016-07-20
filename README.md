@@ -1,5 +1,7 @@
 ## Smother
 
+[![Build Status](https://travis-ci.org/ChrisBeaumont/smother.svg?branch=master)](https://travis-ci.org/ChrisBeaumont/smother)
+
 Smother is a wrapper utility around [coverage.py](https://coverage.readthedocs.io/en/coverage-4.1/) that measures code coverage
 separately for each test in a test suite. It's main features include:
 
