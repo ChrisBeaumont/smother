@@ -80,7 +80,7 @@ def csv(ctx, dst):
     """
     sm = Smother.load(ctx.obj['report'])
     semantic = ctx.obj['semantic']
-    writer = _csv.writer(dst)
+    writer = _csv.writer(dst, lineterminator='\n')
     dst.write("source_context, test_context\n")
     writer.writerows(sm.iter_records(semantic=semantic))
 

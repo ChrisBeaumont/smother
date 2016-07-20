@@ -67,7 +67,8 @@ def test_csv():
     expected = '\n'.join([
         'source_context, test_context',
         'smother/tests/demo.py:11,test2',
-        'smother/tests/demo.py:4,test4\n',
+        'smother/tests/demo.py:4,test4',
+        '',
     ])
 
     runner = CliRunner()
@@ -89,7 +90,8 @@ def test_semantic_csv():
     expected = '\n'.join([
         'source_context, test_context',
         'smother.tests.demo,test4',
-        'smother.tests.demo:bar,test2\n',
+        'smother.tests.demo:bar,test2',
+        '',
     ])
 
     runner = CliRunner()
