@@ -179,6 +179,7 @@ div.indexwrapper h1 {
     text-indent: -999999px;
     background: url(smother.png) no-repeat center center;
     height: 67px;
+    background-size: 300px 67px;
 }
 
 @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
