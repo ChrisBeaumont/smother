@@ -1,9 +1,13 @@
 import json
 import os
+import random
+import six
+import socket
 from collections import defaultdict
 from contextlib import contextmanager
-
-import six
+from coverage.files import PathAliases
+from coverage.files import relative_filename
+from coverage.files import set_relative_directory
 from portalocker import Lock
 
 from smother.python import InvalidPythonFile
@@ -31,8 +35,9 @@ class QueryResult(object):
 
 class Smother(object):
 
-    def __init__(self, coverage=None):
+    def __init__(self, coverage=None, relative_paths=False):
         self.coverage = coverage
+        self.relative_paths = relative_paths
         self.data = {}
 
     def start(self):
@@ -41,7 +46,7 @@ class Smother(object):
 
     def save_context(self, label):
         self.data[label] = {
-            key: sorted(map(int, val.keys()))
+            self._normalize_path(key): sorted(map(int, val.keys()))
             for key, val in self.coverage.collector.data.items()
         }
 
@@ -81,6 +86,13 @@ class Smother(object):
         multiprocess test environment.
         """
         if isinstance(file_or_path, six.string_types):
+            if self.coverage and self.coverage.config.parallel:
+                suffix = "%s.%s.%06d" % (
+                    socket.gethostname(), os.getpid(),
+                    random.randint(0, 999999)
+                )
+                file_or_path += "." + suffix
+
             outfile = Lock(
                 file_or_path, mode='a+',
                 truncate=None,
@@ -119,9 +131,25 @@ class Smother(object):
         result.data = data
         return result
 
+    def _normalize_path(self, path):
+        aliases = None
+        if self.coverage and self.coverage.config.paths:
+            aliases = PathAliases()
+            for paths in self.coverage.config.paths.values():
+                result = paths[0]
+                for pattern in paths[1:]:
+                    aliases.add(pattern, result)
+            path = aliases.map(path)
+
+        if self.relative_paths:
+            set_relative_directory()
+            path = relative_filename(path)
+        return path
+
     def __ior__(self, other):
         for ctx, cover in other.data.items():
             for src, lines in cover.items():
+                src = self._normalize_path(src)
                 old = self.data.setdefault(ctx, {}).setdefault(src, [])
                 self.data[ctx][src] = sorted(set(old + lines))
         return self

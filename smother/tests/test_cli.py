@@ -63,6 +63,43 @@ def test_combine():
         assert json.load(tf) == expected
 
 
+def test_combine_different_root():
+
+    expected = {
+        "test1": {
+            "smother/tests/demo.py": [8]
+        },
+        "test2": {
+            "smother/tests/demo.py": [11, 12]
+        },
+        "test3": {
+            "smother/tests/demo.py": [1, 2, 3]
+        },
+        "test4": {
+            "smother/tests/demo.py": [4]
+        }
+    }
+
+    runner = CliRunner()
+
+    with NamedTemporaryFile(mode='w+') as tf:
+        result = runner.invoke(
+            cli,
+            ['combine',
+             '--relative-paths',
+             'smother/tests/.smother',
+             'smother/tests/.smother_3',
+             tf.name
+             ]
+        )
+
+        assert result.exit_code == 0
+        tf.seek(0)
+        actual = json.load(tf)
+        print(actual)
+        assert actual == expected
+
+
 def test_csv():
     expected = '\n'.join([
         'source_context, test_context',

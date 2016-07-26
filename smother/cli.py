@@ -56,13 +56,17 @@ def diff(ctx, branch):
 
 
 @cli.command()
+@click.option('--relative-paths', is_flag=True)
 @click.argument('src', nargs=-1, type=click.File())
 @click.argument('dst', nargs=1, type=click.Path())
-def combine(src, dst):
+def combine(relative_paths, src, dst):
     """
     Combine several smother reports.
+
+    `--relative-paths`: Use paths relative to current directory
     """
-    result = Smother()
+    c = coverage.Coverage(config_file=True)
+    result = Smother(c, relative_paths=relative_paths)
 
     for infile in src:
         result |= Smother.load(infile)

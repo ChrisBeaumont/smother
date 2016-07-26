@@ -11,3 +11,8 @@ omit =
     *pytest_plugin*
     *nose_plugin*
     */tests/*
+
+[paths]
+source =
+    smother
+    /**/smother

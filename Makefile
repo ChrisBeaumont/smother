@@ -2,7 +2,10 @@
 setup:
 	python setup.py develop
 
-test:
+clean:
+	find . -name "*.pyc" -exec rm {} +
+
+test: clean
 	smother erase
 	py.test --smother=smother --smother-cover --smother-append smother
 	coverage html
