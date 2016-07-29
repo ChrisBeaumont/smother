@@ -17,6 +17,7 @@ from smother.interval import parse_intervals
          'instead of individual line numbers.',
     is_flag=True,
 )
+@click.version_option()
 @click.pass_context
 def cli(ctx, report, semantic):
     """
