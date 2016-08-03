@@ -21,9 +21,6 @@ def pytest_addoption(parser):
     group.addoption('--smother-cover', action='store_true', default=False,
                     help='Create a vanilla coverage file in addition to '
                          'the smother output')
-    group.addoption('--smother-relative-paths', action='store_true',
-                    default=False,
-                    help='Use relative paths')
 
 
 def pytest_configure(config):
@@ -47,9 +44,7 @@ class Plugin(object):
         # smother import statements
         self.coverage.start()
         from smother.control import Smother
-        self.smother = Smother(
-            self.coverage,
-            relative_paths=options.smother_relative_paths)
+        self.smother = Smother(self.coverage)
 
         self.output = options.smother_output
         self.append = options.smother_append

@@ -32,9 +32,7 @@ class SmotherNose(Coverage):
             self.first_test = True
             self.output = options.smother_output
             self.append = options.smother_append
-            self.smother = Smother(
-                self.coverInstance,
-                relative_paths=options.smother_relative_paths)
+            self.smother = Smother(self.coverInstance)
 
     def options(self, parser, env):
         super(Coverage, self).options(parser, env)
@@ -62,10 +60,6 @@ class SmotherNose(Coverage):
                           default=env.get('NOSE_SMOTHER_APPEND'),
                           dest="smother_append",
                           help="Append to existing smother file")
-        parser.add_option("--smother-relative-paths", action="store_true",
-                          default=env.get('NOSE_SMOTHER_RELATIVE_PATHS'),
-                          dest="smother_relative_paths",
-                          help="Use relative paths")
 
     def report(self, stream):
         self.smother.write(self.output, append=self.append)

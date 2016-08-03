@@ -14,6 +14,16 @@ from smother.python import InvalidPythonFile
 from smother.python import PythonFile
 
 
+def get_smother_filename(base_name, parallel_mode):
+    if parallel_mode:
+        suffix = "%s.%s.%06d" % (
+            socket.gethostname(), os.getpid(),
+            random.randint(0, 999999)
+        )
+        base_name += "." + suffix
+    return base_name
+
+
 @contextmanager
 def noclose(file):
     """
@@ -46,7 +56,7 @@ class Smother(object):
 
     def save_context(self, label):
         self.data[label] = {
-            self._normalize_path(key): sorted(map(int, val.keys()))
+            key: sorted(map(int, val.keys()))
             for key, val in self.coverage.collector.data.items()
         }
 
@@ -84,14 +94,14 @@ class Smother(object):
         Append mode is atomic when file_or_path is a path,
         and can be safely run in a multithreaded or
         multiprocess test environment.
+
+        When using `parallel_mode`, file_or_path is given a unique
+        suffix based on the machine name and process id.
         """
         if isinstance(file_or_path, six.string_types):
-            if self.coverage and self.coverage.config.parallel:
-                suffix = "%s.%s.%06d" % (
-                    socket.gethostname(), os.getpid(),
-                    random.randint(0, 999999)
-                )
-                file_or_path += "." + suffix
+            if self.coverage:
+                file_or_path = get_smother_filename(
+                    file_or_path, self.coverage.config.parallel)
 
             outfile = Lock(
                 file_or_path, mode='a+',
@@ -131,7 +141,7 @@ class Smother(object):
         result.data = data
         return result
 
-    def _normalize_path(self, path):
+    def _normalize_combine_path(self, path):
         aliases = None
         if self.coverage and self.coverage.config.paths:
             aliases = PathAliases()
@@ -149,7 +159,7 @@ class Smother(object):
     def __ior__(self, other):
         for ctx, cover in other.data.items():
             for src, lines in cover.items():
-                src = self._normalize_path(src)
+                src = self._normalize_combine_path(src)
                 old = self.data.setdefault(ctx, {}).setdefault(src, [])
                 self.data[ctx][src] = sorted(set(old + lines))
         return self
