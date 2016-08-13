@@ -251,4 +251,3 @@ class Smother(object):
                     aliases.add(pattern, result)
             path = aliases.map(path)
         return path
-

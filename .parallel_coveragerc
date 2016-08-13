@@ -1,0 +1,4 @@
+[paths]
+source =
+    /test-root/smother
+    *smother
