@@ -17,13 +17,22 @@ from smother.interval import parse_intervals
          'instead of individual line numbers.',
     is_flag=True,
 )
+@click.option(
+    '--coveragerc',
+    default=True,
+    help='Coverage config file'
+)
 @click.version_option()
 @click.pass_context
-def cli(ctx, report, semantic):
+def cli(ctx, report, semantic, coveragerc):
     """
     Query or manipulate smother reports
     """
-    ctx.obj = {'report': report, 'semantic': semantic}
+    ctx.obj = {
+        'report': report,
+        'semantic': semantic,
+        'coveragerc': coveragerc,
+    }
 
 
 def _report_from_regions(regions, opts, **kwargs):
@@ -57,21 +66,31 @@ def diff(ctx, branch):
 
 
 @cli.command()
-@click.option('--relative-paths', is_flag=True)
 @click.argument('src', nargs=-1, type=click.File())
 @click.argument('dst', nargs=1, type=click.Path())
-def combine(relative_paths, src, dst):
+@click.pass_context
+def combine(ctx, src, dst):
     """
     Combine several smother reports.
-
-    `--relative-paths`: Use paths relative to current directory
     """
-    c = coverage.Coverage(config_file=True)
-    result = Smother(c, relative_paths=relative_paths)
+    c = coverage.Coverage(config_file=ctx.obj['coveragerc'])
+    result = Smother(c)
 
     for infile in src:
         result |= Smother.load(infile)
 
+    result.write(dst)
+
+
+@cli.command()
+@click.argument('src', nargs=1, type=click.File())
+@click.argument('dst', nargs=1, type=click.Path())
+def convert_to_relative_paths(src, dst):
+    """
+    Converts all file paths in a smother report to relative paths, relative
+    to the current directory.
+    """
+    result = Smother.convert_to_relative_paths(Smother.load(src))
     result.write(dst)
 
 

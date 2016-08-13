@@ -92,3 +92,7 @@ def test_parallel_mode_suffix(mock_os, mock_socket, mock_random):
     assert get_smother_filename(base_name, False) == base_name
     assert (
         get_smother_filename(base_name, True) == base_name + "." + fake_suffix)
+
+
+def test_convert_to_relative_paths():
+    pass

@@ -45,9 +45,8 @@ class QueryResult(object):
 
 class Smother(object):
 
-    def __init__(self, coverage=None, relative_paths=False):
+    def __init__(self, coverage=None):
         self.coverage = coverage
-        self.relative_paths = relative_paths
         self.data = {}
 
     def start(self):
@@ -141,20 +140,18 @@ class Smother(object):
         result.data = data
         return result
 
-    def _normalize_combine_path(self, path):
-        aliases = None
-        if self.coverage and self.coverage.config.paths:
-            aliases = PathAliases()
-            for paths in self.coverage.config.paths.values():
-                result = paths[0]
-                for pattern in paths[1:]:
-                    aliases.add(pattern, result)
-            path = aliases.map(path)
+    @classmethod
+    def convert_to_relative_paths(cls, smother_obj):
+        data = {}
+        set_relative_directory()
+        for ctx, cover in smother_obj.data.items():
+            for src, lines in cover.items():
+                src = relative_filename(src)
+                data[ctx][src] = lines
 
-        if self.relative_paths:
-            set_relative_directory()
-            path = relative_filename(path)
-        return path
+        result = cls()
+        result.data = data
+        return result
 
     def __ior__(self, other):
         for ctx, cover in other.data.items():
@@ -243,3 +240,15 @@ class Smother(object):
                     test_contexts = sorted(test_contexts)
                 for test_context in test_contexts:
                     yield src_context, test_context
+
+    def _normalize_combine_path(self, path):
+        aliases = None
+        if self.coverage and self.coverage.config.paths:
+            aliases = PathAliases()
+            for paths in self.coverage.config.paths.values():
+                result = paths[0]
+                for pattern in paths[1:]:
+                    aliases.add(pattern, result)
+            path = aliases.map(path)
+        return path
+

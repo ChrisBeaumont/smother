@@ -67,16 +67,16 @@ def test_combine_different_root():
 
     expected = {
         "test1": {
-            "smother/tests/demo.py": [8]
+            "/test-root/smother/tests/demo.py": [8]
         },
         "test2": {
-            "smother/tests/demo.py": [11, 12]
+            "/test-root/smother/tests/demo.py": [11, 12]
         },
         "test3": {
-            "smother/tests/demo.py": [1, 2, 3]
+            "/test-root/smother/tests/demo.py": [1, 2, 3]
         },
         "test4": {
-            "smother/tests/demo.py": [4]
+            "/test-root/smother/tests/demo.py": [4]
         }
     }
 
@@ -85,8 +85,8 @@ def test_combine_different_root():
     with NamedTemporaryFile(mode='w+') as tf:
         result = runner.invoke(
             cli,
-            ['combine',
-             '--relative-paths',
+            ['--coveragerc=smother/tests/.coveragerc',
+             'combine',
              'smother/tests/.smother',
              'smother/tests/.smother_3',
              tf.name
@@ -95,9 +95,7 @@ def test_combine_different_root():
 
         assert result.exit_code == 0
         tf.seek(0)
-        actual = json.load(tf)
-        print(actual)
-        assert actual == expected
+        assert json.load(tf) == expected
 
 
 def test_csv():
@@ -144,4 +142,6 @@ def test_semantic_csv():
         )
         assert result.exit_code == 0
         tf.seek(0)
-        assert tf.read() == expected
+        actual = tf.read()
+        print actual
+        assert actual == expected
