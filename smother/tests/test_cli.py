@@ -142,6 +142,4 @@ def test_semantic_csv():
         )
         assert result.exit_code == 0
         tf.seek(0)
-        actual = tf.read()
-        print actual
-        assert actual == expected
+        assert tf.read() == expected
