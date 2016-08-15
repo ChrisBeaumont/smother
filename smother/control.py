@@ -14,6 +14,16 @@ from smother.python import InvalidPythonFile
 from smother.python import PythonFile
 
 
+def create_path_aliases_from_coverage(coverage):
+    aliases = PathAliases()
+    if coverage and coverage.config.paths:
+        for paths in coverage.config.paths.values():
+            result = paths[0]
+            for pattern in paths[1:]:
+                aliases.add(pattern, result)
+    return aliases
+
+
 def get_smother_filename(base_name, parallel_mode):
     if parallel_mode:
         suffix = "%s.%s.%06d" % (
@@ -48,6 +58,7 @@ class Smother(object):
     def __init__(self, coverage=None):
         self.coverage = coverage
         self.data = {}
+        self.aliases = create_path_aliases_from_coverage(self.coverage)
 
     def start(self):
         self.coverage.collector.reset()
@@ -142,7 +153,7 @@ class Smother(object):
 
     @classmethod
     def convert_to_relative_paths(cls, smother_obj):
-        data = {}
+        data = defaultdict(lambda: dict())
         set_relative_directory()
         for ctx, cover in smother_obj.data.items():
             for src, lines in cover.items():
@@ -150,13 +161,13 @@ class Smother(object):
                 data[ctx][src] = lines
 
         result = cls()
-        result.data = data
+        result.data = dict(data)
         return result
 
     def __ior__(self, other):
         for ctx, cover in other.data.items():
             for src, lines in cover.items():
-                src = self._normalize_combine_path(src)
+                src = self.aliases.map(src)
                 old = self.data.setdefault(ctx, {}).setdefault(src, [])
                 self.data[ctx][src] = sorted(set(old + lines))
         return self
@@ -240,14 +251,3 @@ class Smother(object):
                     test_contexts = sorted(test_contexts)
                 for test_context in test_contexts:
                     yield src_context, test_context
-
-    def _normalize_combine_path(self, path):
-        aliases = None
-        if self.coverage and self.coverage.config.paths:
-            aliases = PathAliases()
-            for paths in self.coverage.config.paths.values():
-                result = paths[0]
-                for pattern in paths[1:]:
-                    aliases.add(pattern, result)
-            path = aliases.map(path)
-        return path

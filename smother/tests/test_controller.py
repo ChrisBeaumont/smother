@@ -95,4 +95,13 @@ def test_parallel_mode_suffix(mock_os, mock_socket, mock_random):
 
 
 def test_convert_to_relative_paths():
-    pass
+    smother = Smother()
+    smother.data = {
+        'test1': {os.path.abspath('smother/tests/demo.py'): [8]}
+    }
+
+    expected_data = {
+        'test1': {'smother/tests/demo.py': [8]}
+    }
+
+    assert Smother.convert_to_relative_paths(smother).data == expected_data
