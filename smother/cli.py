@@ -18,20 +18,20 @@ from smother.interval import parse_intervals
     is_flag=True,
 )
 @click.option(
-    '--coveragerc',
+    '--rcfile',
     default=True,
     help='Coverage config file'
 )
 @click.version_option()
 @click.pass_context
-def cli(ctx, report, semantic, coveragerc):
+def cli(ctx, report, semantic, rcfile):
     """
     Query or manipulate smother reports
     """
     ctx.obj = {
         'report': report,
         'semantic': semantic,
-        'coveragerc': coveragerc,
+        'rcfile': rcfile,
     }
 
 
@@ -73,7 +73,7 @@ def combine(ctx, src, dst):
     """
     Combine several smother reports.
     """
-    c = coverage.Coverage(config_file=ctx.obj['coveragerc'])
+    c = coverage.Coverage(config_file=ctx.obj['rcfile'])
     result = Smother(c)
 
     for infile in src:

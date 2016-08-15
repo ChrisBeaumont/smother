@@ -85,7 +85,7 @@ def test_combine_different_root():
     with NamedTemporaryFile(mode='w+') as tf:
         result = runner.invoke(
             cli,
-            ['--coveragerc', '.parallel_coveragerc',
+            ['--rcfile', '.parallel_coveragerc',
              'combine',
              'smother/tests/.smother',
              'smother/tests/.smother_3',
