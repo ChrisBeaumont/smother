@@ -1,4 +1,5 @@
-from setuptools import setup, find_packages
+import os
+from setuptools import setup, find_packages, Command
 
 try:
     import pypandoc
@@ -7,9 +8,23 @@ except (IOError, ImportError):
     with open('README.md') as infile:
         LONG_DESCRIPTION = infile.read()
 
+
+class CleanCommand(Command):
+    """Custom clean command to tidy up the project root."""
+    user_options = []
+
+    def initialize_options(self):
+        pass
+
+    def finalize_options(self):
+        pass
+
+    def run(self):
+        os.system('rm -vrf ./build ./dist ./*.egg-info ./htmlcov')
+
 setup(
     name='smother',
-    version='0.1',
+    version='0.2',
     description='An abundance of coverage data',
     long_description=LONG_DESCRIPTION,
     packages=find_packages(),
@@ -46,5 +61,8 @@ setup(
     },
     package_data={
         '': ["*.smother*"],
+    },
+    cmdclass={
+        'clean': CleanCommand,
     }
 )

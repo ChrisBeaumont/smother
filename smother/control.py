@@ -1,13 +1,37 @@
 import json
 import os
+import random
+import six
+import socket
 from collections import defaultdict
 from contextlib import contextmanager
-
-import six
+from coverage.files import PathAliases
+from coverage.files import relative_filename
+from coverage.files import set_relative_directory
 from portalocker import Lock
 
 from smother.python import InvalidPythonFile
 from smother.python import PythonFile
+
+
+def create_path_aliases_from_coverage(coverage):
+    aliases = PathAliases()
+    if coverage and coverage.config.paths:
+        for paths in coverage.config.paths.values():
+            result = paths[0]
+            for pattern in paths[1:]:
+                aliases.add(pattern, result)
+    return aliases
+
+
+def get_smother_filename(base_name, parallel_mode):
+    if parallel_mode:
+        suffix = "%s.%s.%06d" % (
+            socket.gethostname(), os.getpid(),
+            random.randint(0, 999999)
+        )
+        base_name += "." + suffix
+    return base_name
 
 
 @contextmanager
@@ -34,6 +58,7 @@ class Smother(object):
     def __init__(self, coverage=None):
         self.coverage = coverage
         self.data = {}
+        self.aliases = create_path_aliases_from_coverage(self.coverage)
 
     def start(self):
         self.coverage.collector.reset()
@@ -79,8 +104,15 @@ class Smother(object):
         Append mode is atomic when file_or_path is a path,
         and can be safely run in a multithreaded or
         multiprocess test environment.
+
+        When using `parallel_mode`, file_or_path is given a unique
+        suffix based on the machine name and process id.
         """
         if isinstance(file_or_path, six.string_types):
+            if self.coverage:
+                file_or_path = get_smother_filename(
+                    file_or_path, self.coverage.config.parallel)
+
             outfile = Lock(
                 file_or_path, mode='a+',
                 truncate=None,
@@ -119,9 +151,23 @@ class Smother(object):
         result.data = data
         return result
 
+    @classmethod
+    def convert_to_relative_paths(cls, smother_obj):
+        data = defaultdict(lambda: dict())
+        set_relative_directory()
+        for ctx, cover in smother_obj.data.items():
+            for src, lines in cover.items():
+                src = relative_filename(src)
+                data[ctx][src] = lines
+
+        result = cls()
+        result.data = dict(data)
+        return result
+
     def __ior__(self, other):
         for ctx, cover in other.data.items():
             for src, lines in cover.items():
+                src = self.aliases.map(src)
                 old = self.data.setdefault(ctx, {}).setdefault(src, [])
                 self.data[ctx][src] = sorted(set(old + lines))
         return self

@@ -63,6 +63,41 @@ def test_combine():
         assert json.load(tf) == expected
 
 
+def test_combine_different_root():
+
+    expected = {
+        "test1": {
+            "/test-root/smother/tests/demo.py": [8]
+        },
+        "test2": {
+            "/test-root/smother/tests/demo.py": [11, 12]
+        },
+        "test3": {
+            "/test-root/smother/tests/demo.py": [1, 2, 3]
+        },
+        "test4": {
+            "/test-root/smother/tests/demo.py": [4]
+        }
+    }
+
+    runner = CliRunner()
+
+    with NamedTemporaryFile(mode='w+') as tf:
+        result = runner.invoke(
+            cli,
+            ['--rcfile', '.parallel_coveragerc',
+             'combine',
+             'smother/tests/.smother',
+             'smother/tests/.smother_3',
+             tf.name
+             ]
+        )
+
+        assert result.exit_code == 0
+        tf.seek(0)
+        assert json.load(tf) == expected
+
+
 def test_csv():
     expected = '\n'.join([
         'source_context, test_context',
