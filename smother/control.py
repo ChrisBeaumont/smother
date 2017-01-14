@@ -115,7 +115,6 @@ class Smother(object):
 
             outfile = Lock(
                 file_or_path, mode='a+',
-                truncate=None,
                 timeout=timeout,
                 fail_when_locked=False
             )
