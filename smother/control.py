@@ -61,14 +61,15 @@ class Smother(object):
         self.aliases = create_path_aliases_from_coverage(self.coverage)
 
     def start(self):
-        self.coverage.collector.reset()
+        self.coverage.erase()
         self.coverage.start()
 
     def save_context(self, label):
-        self.data[label] = {
-            key: sorted(map(int, val.keys()))
-            for key, val in self.coverage.collector.data.items()
-        }
+        data = self.coverage.get_data()
+        smother = {}
+        for filename in data.measured_files():
+            smother[filename] = sorted(data.lines(filename))
+        self.data[label] = smother
 
     def write_coverage(self):
         # coverage won't write data if it hasn't been started.
