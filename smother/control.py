@@ -61,7 +61,7 @@ class Smother(object):
         self.aliases = create_path_aliases_from_coverage(self.coverage)
 
     def start(self):
-        self.coverage.collector.reset()
+        self.coverage.erase()
         self.coverage.start()
 
     def save_context(self, label):
@@ -69,7 +69,6 @@ class Smother(object):
         smother = {}
         for filename in data.measured_files():
             smother[filename] = sorted(data.lines(filename))
-        data.erase()
         self.data[label] = smother
 
     def write_coverage(self):
