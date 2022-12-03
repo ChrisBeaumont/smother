@@ -27,7 +27,6 @@ def git_diff(ref=None):
         '--no-color',
         '--no-ext-diff'
     ]
-
     data = execute(list(filter(None, cmd)))
     return PatchSet(data.splitlines())
 
