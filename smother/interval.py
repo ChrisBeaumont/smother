@@ -4,6 +4,8 @@
 import re
 from collections import namedtuple
 
+from coverage.numbits import numbits_to_nums
+
 from smother.python import PythonFile
 
 NUMBER_RE = re.compile('([0-9]+)(?:-([0-9]+))?')
@@ -28,10 +30,8 @@ class LineInterval(namedtuple('LineInterval', 'filename start stop'),
     Interval defined by a right-open interval of 1-offset line numbers.
     """
     def intersects(self, python_file, lines):
-
         assert python_file.filename == self.filename
-
-        for line in lines:
+        for line in numbits_to_nums(lines):
             if (line >= self.start) and (line < self.stop):
                 return True
         return False
@@ -46,7 +46,7 @@ class ContextInterval(namedtuple('ContextInterval', 'filename context'),
     def intersects(self, python_file, lines):
         assert python_file.filename == self.filename
 
-        for line in lines:
+        for line in numbits_to_nums(lines):
             if python_file.context(line) == self.context:
                 return True
         return False
